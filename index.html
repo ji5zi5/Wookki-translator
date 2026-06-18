@@ -1,0 +1,541 @@
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>우끼어 양방향 번역기</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 모바일 터치 하이라이트 제거 및 자연스러운 동작 */
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* 커스텀 스크롤바 디자인 */
+        .scrollbar-custom::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .scrollbar-custom::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .scrollbar-custom::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen font-sans antialiased select-none">
+
+    <!-- 상단 헤더 -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/80 py-4 px-4 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl">🐵</span>
+                <div>
+                    <h1 class="text-base font-bold text-slate-900 tracking-tight leading-none">우끼어 번역기</h1>
+                    <span class="text-[10px] text-rose-500 font-semibold">실시간 양방향 지원</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <label class="flex items-center space-x-1.5 cursor-pointer select-none">
+                    <input 
+                        type="checkbox" 
+                        id="autoDetectCheckbox" 
+                        checked 
+                        class="rounded text-rose-500 focus:ring-rose-400 border-slate-300 w-4 h-4 cursor-pointer"
+                    />
+                    <span class="text-xs text-slate-500 font-medium">자동 감지</span>
+                </label>
+                <button
+                    id="toggleRulesBtn"
+                    class="text-xs font-bold text-slate-600 border border-slate-200 px-2.5 py-1.5 rounded-xl hover:bg-slate-50 transition-colors bg-white active:scale-95"
+                >
+                    치환표
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 영역 -->
+    <main class="max-w-5xl w-full mx-auto px-4 py-4 md:py-8 flex-grow flex flex-col justify-start md:justify-center">
+        
+        <!-- 언어 선택 및 방향 전환 (언제나 일관된 좌우 레이아웃) -->
+        <div class="flex items-center justify-between bg-white rounded-2xl border border-slate-200/80 p-1.5 shadow-sm max-w-md mx-auto w-full mb-4">
+            <!-- 왼쪽 언어 라벨 -->
+            <button 
+                id="langLeftBtn"
+                class="flex-1 py-3 text-center text-sm font-bold text-rose-600 bg-rose-50 rounded-xl transition-all duration-300 active:scale-95"
+            >
+                한국어
+            </button>
+            
+            <!-- 중앙 교환 버튼 (모바일에서도 항상 좌우 화살표 유지) -->
+            <button
+                id="swapBtn"
+                class="mx-2 p-3 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-500 transition-all duration-300 active:scale-90 flex items-center justify-center shadow-sm"
+                title="번역 방향 전환"
+            >
+                <!-- 좌우 양방향 교환 화살표 아이콘 -->
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                </svg>
+            </button>
+
+            <!-- 오른쪽 언어 라벨 -->
+            <button 
+                id="langRightBtn"
+                class="flex-1 py-3 text-center text-sm font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all duration-300 active:scale-95"
+            >
+                우끼어
+            </button>
+        </div>
+
+        <!-- 입력/출력 텍스트 카드 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white rounded-3xl shadow-md border border-slate-200/60 overflow-hidden">
+            
+            <!-- 왼쪽: 입력란 -->
+            <div class="p-5 flex flex-col h-64 md:h-[380px] border-b md:border-b-0 md:border-r border-slate-100 relative">
+                <div class="flex justify-between items-center mb-2.5">
+                    <span id="inputLabel" class="text-xs font-bold text-slate-400 tracking-wider">한국어 입력</span>
+                    <button 
+                        id="clearBtn"
+                        class="text-slate-400 hover:text-slate-600 text-xs hidden items-center gap-1 py-1 px-2 hover:bg-slate-50 rounded-lg transition-colors"
+                    >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        지우기
+                    </button>
+                </div>
+                <textarea
+                    id="inputText"
+                    placeholder="번역할 한글 문장이나 자음, 모음을 입력하세요."
+                    class="w-full flex-grow resize-none border-0 p-0 text-slate-800 text-base md:text-lg placeholder-slate-300 focus:ring-0 focus:outline-none leading-relaxed select-text"
+                ></textarea>
+                <div class="absolute bottom-3 right-5 text-[10px] text-slate-300 font-medium" id="charCounter">0자</div>
+            </div>
+
+            <!-- 오른쪽: 출력 결과란 -->
+            <div class="p-5 flex flex-col h-64 md:h-[380px] bg-slate-50/40 relative">
+                <div class="flex justify-between items-center mb-2.5">
+                    <span id="outputLabel" class="text-xs font-bold text-slate-400 tracking-wider">우끼어 번역 결과</span>
+                    <button
+                        id="copyBtn"
+                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold hidden items-center gap-1 bg-white border border-slate-200 text-slate-600 active:bg-slate-100 transition-all shadow-sm active:scale-95"
+                    >
+                        복사하기
+                    </button>
+                </div>
+                <div 
+                    id="outputText"
+                    class="w-full flex-grow overflow-y-auto text-slate-800 text-base md:text-lg font-medium leading-relaxed break-all select-all scrollbar-custom"
+                >
+                    <span class="text-slate-300 italic font-normal">여기에 번역 결과가 실시간으로 표시됩니다.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 접이식 치환 테이블 안내판 -->
+        <div id="rulesPanel" class="mt-4 bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hidden">
+            <h3 class="text-xs font-bold text-slate-800 mb-3 flex items-center gap-1.5">
+                <span>📖</span> 실시간 치환 공식 표
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[11px] text-slate-600">
+                <!-- 자음 가이드 -->
+                <div>
+                    <h4 class="font-bold text-blue-500 mb-1.5 border-b pb-0.5">자음 대응표</h4>
+                    <div id="consonantsGrid" class="grid grid-cols-3 gap-1"></div>
+                </div>
+                <!-- 모음 가이드 -->
+                <div>
+                    <h4 class="font-bold text-emerald-500 mb-1.5 border-b pb-0.5">모음 대응표</h4>
+                    <div id="vowelsGrid" class="grid grid-cols-3 gap-1"></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 모바일 전용 하단 알림 피드백 -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white text-xs font-bold px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 opacity-0 pointer-events-none transform translate-y-2 z-50 flex items-center gap-1.5">
+        <span>📋</span> 번역 결과가 복사되었습니다!
+    </div>
+
+    <!-- 하단 영역 푸터 -->
+    <footer class="py-4 border-t border-slate-200/60 text-center text-[10px] text-slate-400">
+        <p>© Wookki Translator Ultimate (Standard Mode). All rights reserved.</p>
+    </footer>
+
+    <!-- 핵심 비즈니스 로직 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- 1. 변환 데이터 구조 정의 ---
+            const CONSONANTS = {
+                'ㄱ': '우끼', 'ㅋ': '욱끼', 'ㄲ': '욲끼',
+                'ㄷ': '우끽', 'ㅌ': '욱끽', 'ㄸ': '욲끽',
+                'ㅂ': '우끾', 'ㅍ': '욱끾', 'ㅃ': '욲끾',
+                'ㅈ': '우ㄲ', 'ㅊ': '욱ㄲ', 'ㅉ': '욲ㄲ',
+                'ㅅ': '우우', 'ㅆ': '욲우', 'ㅇ': '우욱', 'ㅎ': '욱욱',
+                'ㄴ': '우욲', 'ㅁ': '욱욲', 'ㄹ': '욲욲'
+            };
+
+            const VOWELS = {
+                'ㅣ': '끼', 'ㅡ': '끄', 'ㅏ': '끽', '야': '끾', 'ㅑ': '끾',
+                'ㅓ': 'ㄱ끼', 'ㅕ': 'ㄲ끼', 'ㅗ': 'ㄱ끄', 'ㅛ': 'ㄲ끅', 
+                'ㅜ': '끅', 'ㅠ': '끆',
+                'ㅐ': '끽끼',   'ㅔ': 'ㄱ끼끼',  'ㅒ': '끾끼',   'ㅖ': 'ㄲ끼끼',  
+                'ㅘ': 'ㄱ끄끽', 'ㅙ': 'ㄱ끄끽끼', 'ㅚ': 'ㄱ끄끼',  'ㅝ': '극ㄱ끼',  
+                'ㅞ': '끅ㄱ끼끼', 'ㅟ': '끅끼',   'ㅢ': '끄끼'
+            };
+
+            const CHOSEONG_LIST = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+            const JUNGSEONG_LIST = ['ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ'];
+            const JONGSEONG_LIST = ['', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+
+            const DOUBLE_JONGSEONG = {
+                'ㄳ': ['ㄱ', 'ㅅ'], 'ㄵ': ['ㄴ', 'ㅈ'], 'ㄶ': ['ㄴ', 'ㅎ'],
+                'ㄺ': ['ㄹ', 'ㄱ'], 'ㄻ': ['ㄹ', 'ㅁ'], 'ㄼ': ['ㄹ', 'ㅂ'],
+                'ㄽ': ['ㄹ', 'ㅅ'], 'ㄾ': ['ㄹ', 'ㅌ'], 'ㄿ': ['ㄹ', 'ㅍ'],
+                'ㅀ': ['ㄹ', 'ㅎ'], 'ㅄ': ['ㅂ', 'ㅅ']
+            };
+
+            // 복원 및 해독을 위한 역방향 분석 사전
+            const REVERSE_LOOKUP = {};
+            Object.entries(CONSONANTS).forEach(([kor, wook]) => {
+                REVERSE_LOOKUP[wook] = { type: 'consonant', value: kor };
+            });
+            Object.entries(VOWELS).forEach(([kor, wook]) => {
+                if (!REVERSE_LOOKUP[wook]) {
+                    REVERSE_LOOKUP[wook] = { type: 'vowel', value: kor };
+                } else {
+                    if (!Array.isArray(REVERSE_LOOKUP[wook])) {
+                        REVERSE_LOOKUP[wook] = [REVERSE_LOOKUP[wook]];
+                    }
+                    REVERSE_LOOKUP[wook].push({ type: 'vowel', value: kor });
+                }
+            });
+
+            // 매칭 정확성을 위해 긴 형태의 단어부터 역순 탐색하도록 설계
+            const ALL_WOOKKI_TOKENS = [
+                ...Object.values(CONSONANTS),
+                ...Object.values(VOWELS)
+            ].filter((v, i, self) => self.indexOf(v) === i)
+             .sort((a, b) => b.length - a.length);
+
+            // --- 2. 한글 합성 엔진 함수 ---
+            const assembleHangul = (cho, jung, jong) => {
+                const choIdx = CHOSEONG_LIST.indexOf(cho);
+                const jungIdx = JUNGSEONG_LIST.indexOf(jung);
+                const jongIdx = jong ? JONGSEONG_LIST.indexOf(jong) : 0;
+                if (choIdx !== -1 && jungIdx !== -1) {
+                    return String.fromCharCode(0xac00 + (choIdx * 588) + (jungIdx * 28) + jongIdx);
+                }
+                return '';
+            };
+
+            const assembleDoubleJongseong = (j1, j2) => {
+                for (const [key, val] of Object.entries(DOUBLE_JONGSEONG)) {
+                    if (val[0] === j1 && val[1] === j2) return key;
+                }
+                return null;
+            };
+
+            // --- 3. DOM 요소 획득 ---
+            const inputTextEl = document.getElementById('inputText');
+            const outputTextEl = document.getElementById('outputText');
+            const clearBtn = document.getElementById('clearBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const swapBtn = document.getElementById('swapBtn');
+            const autoDetectCheckbox = document.getElementById('autoDetectCheckbox');
+            const toggleRulesBtn = document.getElementById('toggleRulesBtn');
+            const rulesPanel = document.getElementById('rulesPanel');
+            
+            const langLeftBtn = document.getElementById('langLeftBtn');
+            const langRightBtn = document.getElementById('langRightBtn');
+            const inputLabel = document.getElementById('inputLabel');
+            const outputLabel = document.getElementById('outputLabel');
+            const charCounter = document.getElementById('charCounter');
+            const toastEl = document.getElementById('toast');
+
+            let mode = 'koToWook'; 
+            let isAutoDetecting = true;
+
+            // --- 4. 코어 번역 처리 장치 ---
+            const translateToWookki = (text) => {
+                let result = '';
+                for (let i = 0; i < text.length; i++) {
+                    const char = text[i];
+                    const code = char.charCodeAt(0);
+
+                    if (code >= 0xac00 && code <= 0xd7a3) {
+                        const syllableIndex = code - 0xac00;
+                        const choIdx = Math.floor(syllableIndex / 588);
+                        const jungIdx = Math.floor((syllableIndex % 588) / 28);
+                        const jongIdx = syllableIndex % 28;
+
+                        const choTrans = CONSONANTS[CHOSEONG_LIST[choIdx]] || '';
+                        const jungTrans = VOWELS[JUNGSEONG_LIST[jungIdx]] || '';
+                        let jongTrans = '';
+                        
+                        const jong = JONGSEONG_LIST[jongIdx];
+                        if (jong) {
+                            if (CONSONANTS[jong]) {
+                                jongTrans = CONSONANTS[jong];
+                            } else if (DOUBLE_JONGSEONG[jong]) {
+                                jongTrans = DOUBLE_JONGSEONG[jong].map(p => CONSONANTS[p] || '').join('');
+                            }
+                        }
+                        result += choTrans + jungTrans + jongTrans;
+                    } 
+                    else if (code >= 0x3131 && code <= 0x314e) {
+                        result += CONSONANTS[char] || char;
+                    } 
+                    else if (code >= 0x314f && code <= 0x3163) {
+                        result += VOWELS[char] || char;
+                    } 
+                    else {
+                        result += char;
+                    }
+                }
+                return result;
+            };
+
+            const decodeWookki = (text) => {
+                let i = 0;
+                let parsedTokens = [];
+
+                while (i < text.length) {
+                    let matched = false;
+
+                    if (text[i] === ' ' || text[i] === '\n' || !/[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(text[i])) {
+                        parsedTokens.push({ type: 'literal', value: text[i] });
+                        i++;
+                        continue;
+                    }
+
+                    for (const tok of ALL_WOOKKI_TOKENS) {
+                        if (text.startsWith(tok, i)) {
+                            let data = REVERSE_LOOKUP[tok];
+                            if (Array.isArray(data)) {
+                                data = data[0]; 
+                            }
+                            parsedTokens.push({
+                                type: data.type,
+                                token: tok,
+                                value: data.value
+                            });
+                            i += tok.length;
+                            matched = true;
+                            break;
+                        }
+                    }
+
+                    if (!matched) {
+                        parsedTokens.push({ type: 'literal', value: text[i] });
+                        i++;
+                    }
+                }
+
+                let finalResult = '';
+                let index = 0;
+
+                while (index < parsedTokens.length) {
+                    const t1 = parsedTokens[index];
+
+                    if (t1.type === 'consonant') {
+                        const t2 = parsedTokens[index + 1];
+
+                        if (t2 && t2.type === 'vowel') {
+                            const t3 = parsedTokens[index + 2];
+                            const t4 = parsedTokens[index + 3];
+
+                            if (t3 && t3.type === 'consonant' && t4 && t4.type === 'consonant') {
+                                const doubleJong = assembleDoubleJongseong(t3.value, t4.value);
+                                const t5 = parsedTokens[index + 4];
+
+                                if (doubleJong && (!t5 || t5.type !== 'vowel')) {
+                                    finalResult += assembleHangul(t1.value, t2.value, doubleJong);
+                                    index += 4;
+                                    continue;
+                                }
+                            }
+
+                            if (t3 && t3.type === 'consonant') {
+                                if (!t4 || t4.type !== 'vowel') {
+                                    finalResult += assembleHangul(t1.value, t2.value, t3.value);
+                                    index += 3;
+                                    continue;
+                                }
+                            }
+
+                            finalResult += assembleHangul(t1.value, t2.value, null);
+                            index += 2;
+                            continue;
+                        }
+                        finalResult += t1.value;
+                        index += 1;
+                    } else if (t1.type === 'vowel') {
+                        finalResult += t1.value;
+                        index += 1;
+                    } else {
+                        finalResult += t1.value;
+                        index += 1;
+                    }
+                }
+                return finalResult;
+            };
+
+            // --- 5. 상태 변경에 따른 인터페이스 업데이트 함수 ---
+            const performTranslation = () => {
+                const text = inputTextEl.value;
+                charCounter.textContent = `${text.length}자`;
+
+                if (text.length > 0) {
+                    clearBtn.classList.remove('hidden');
+                    clearBtn.classList.add('flex');
+                    copyBtn.classList.remove('hidden');
+                    copyBtn.classList.add('flex');
+                } else {
+                    clearBtn.classList.add('hidden');
+                    clearBtn.classList.remove('flex');
+                    copyBtn.classList.add('hidden');
+                    copyBtn.classList.remove('flex');
+                    outputTextEl.innerHTML = '<span class="text-slate-300 italic font-normal">여기에 번역 결과가 실시간으로 표시됩니다.</span>';
+                    return;
+                }
+
+                // 입력 데이터 검사 후 번역 모드 자동 제어
+                if (isAutoDetecting) {
+                    const wookkiChars = (text.match(/[우끼욱욲]/g) || []).length;
+                    const totalKoreanChars = (text.match(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g) || []).length;
+                    if (totalKoreanChars > 0) {
+                        const ratio = wookkiChars / totalKoreanChars;
+                        if (ratio > 0.65 && mode !== 'wookToKo') {
+                            setTranslationMode('wookToKo');
+                        } else if (ratio < 0.25 && mode !== 'koToWook') {
+                            setTranslationMode('koToWook');
+                        }
+                    }
+                }
+
+                if (mode === 'koToWook') {
+                    outputTextEl.textContent = translateToWookki(text);
+                } else {
+                    outputTextEl.textContent = decodeWookki(text);
+                }
+            };
+
+            const setTranslationMode = (newMode) => {
+                mode = newMode;
+                if (mode === 'koToWook') {
+                    langLeftBtn.className = "flex-1 py-3 text-center text-sm font-bold text-rose-600 bg-rose-50 rounded-xl transition-all duration-300";
+                    langRightBtn.className = "flex-1 py-3 text-center text-sm font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all duration-300";
+                    inputLabel.textContent = "한국어 입력";
+                    outputLabel.textContent = "우끼어 번역 결과";
+                    inputTextEl.placeholder = "번역할 한글 문장이나 자음, 모음을 입력하세요.";
+                } else {
+                    langRightBtn.className = "flex-1 py-3 text-center text-sm font-bold text-rose-600 bg-rose-50 rounded-xl transition-all duration-300";
+                    langLeftBtn.className = "flex-1 py-3 text-center text-sm font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all duration-300";
+                    inputLabel.textContent = "우끼어 입력";
+                    outputLabel.textContent = "한국어 번역 결과";
+                    inputTextEl.placeholder = "번역할 우끼어 내용을 입력하세요.";
+                }
+            };
+
+            const swapDirection = () => {
+                isAutoDetecting = false; 
+                autoDetectCheckbox.checked = false;
+
+                const currentOutput = outputTextEl.textContent;
+                const isPlaceholder = outputTextEl.querySelector('span');
+
+                setTranslationMode(mode === 'koToWook' ? 'wookToKo' : 'koToWook');
+
+                if (!isPlaceholder && currentOutput) {
+                    inputTextEl.value = currentOutput;
+                }
+                performTranslation();
+            };
+
+            // --- 6. 사용자 이벤트 리스너 등록 ---
+            inputTextEl.addEventListener('input', performTranslation);
+            
+            clearBtn.addEventListener('click', () => {
+                inputTextEl.value = '';
+                performTranslation();
+                inputTextEl.focus();
+            });
+
+            swapBtn.addEventListener('click', swapDirection);
+
+            autoDetectCheckbox.addEventListener('change', (e) => {
+                isAutoDetecting = e.target.checked;
+                if (isAutoDetecting) performTranslation();
+            });
+
+            // 결과 복사 클립보드 기능 제어 (iframe 최적화)
+            copyBtn.addEventListener('click', () => {
+                const textToCopy = outputTextEl.textContent;
+                if (!textToCopy) return;
+
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = textToCopy;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                try {
+                    document.execCommand('copy');
+                    
+                    // 성공 피드백 토스트 활성화
+                    toastEl.classList.remove('opacity-0', 'translate-y-2', 'pointer-events-none');
+                    toastEl.classList.add('opacity-100', 'translate-y-0');
+                    setTimeout(() => {
+                        toastEl.classList.remove('opacity-100', 'translate-y-0');
+                        toastEl.classList.add('opacity-0', 'translate-y-2', 'pointer-events-none');
+                    }, 2000);
+
+                } catch (err) {
+                    console.error('클립보드 복사 실패:', err);
+                }
+                document.body.removeChild(tempTextArea);
+            });
+
+            // 가이드라인 매핑 데이터 동적 삽입
+            const loadRulesGrid = () => {
+                const conGrid = document.getElementById('consonantsGrid');
+                const vowGrid = document.getElementById('vowelsGrid');
+
+                Object.entries(CONSONANTS).forEach(([k, v]) => {
+                    const card = document.createElement('div');
+                    card.className = "flex justify-between bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100";
+                    card.innerHTML = `<span class="font-bold text-slate-400">${k}</span><span class="text-slate-700">${v}</span>`;
+                    conGrid.appendChild(card);
+                });
+
+                Object.entries(VOWELS).slice(0, 15).forEach(([k, v]) => {
+                    const card = document.createElement('div');
+                    card.className = "flex justify-between bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100";
+                    card.innerHTML = `<span class="font-bold text-slate-400">${k}</span><span class="text-slate-700">${v}</span>`;
+                    vowGrid.appendChild(card);
+                });
+            };
+
+            toggleRulesBtn.addEventListener('click', () => {
+                const isHidden = rulesPanel.classList.contains('hidden');
+                if (isHidden) {
+                    rulesPanel.classList.remove('hidden');
+                    toggleRulesBtn.textContent = '닫기';
+                } else {
+                    rulesPanel.classList.add('hidden');
+                    toggleRulesBtn.textContent = '치환표';
+                }
+            });
+
+            // 실행
+            loadRulesGrid();
+        });
+    </script>
+</body>
+</html>
+
+```
