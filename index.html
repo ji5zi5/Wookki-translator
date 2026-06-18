@@ -4,14 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>우끼어 양방향 번역기</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 모바일 터치 하이라이트 제거 및 자연스러운 동작 */
         * {
             -webkit-tap-highlight-color: transparent;
         }
-        /* 커스텀 스크롤바 디자인 */
         .scrollbar-custom::-webkit-scrollbar {
             width: 4px;
             height: 4px;
@@ -27,7 +24,6 @@
 </head>
 <body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen font-sans antialiased select-none">
 
-    <!-- 상단 헤더 -->
     <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/80 py-4 px-4 sticky top-0 z-30 shadow-sm">
         <div class="max-w-5xl mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-2">
@@ -57,12 +53,9 @@
         </div>
     </header>
 
-    <!-- 메인 영역 -->
     <main class="max-w-5xl w-full mx-auto px-4 py-4 md:py-8 flex-grow flex flex-col justify-start md:justify-center">
         
-        <!-- 언어 선택 및 방향 전환 (언제나 일관된 좌우 레이아웃) -->
         <div class="flex items-center justify-between bg-white rounded-2xl border border-slate-200/80 p-1.5 shadow-sm max-w-md mx-auto w-full mb-4">
-            <!-- 왼쪽 언어 라벨 -->
             <button 
                 id="langLeftBtn"
                 class="flex-1 py-3 text-center text-sm font-bold text-rose-600 bg-rose-50 rounded-xl transition-all duration-300 active:scale-95"
@@ -70,19 +63,16 @@
                 한국어
             </button>
             
-            <!-- 중앙 교환 버튼 (모바일에서도 항상 좌우 화살표 유지) -->
             <button
                 id="swapBtn"
                 class="mx-2 p-3 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-500 transition-all duration-300 active:scale-90 flex items-center justify-center shadow-sm"
                 title="번역 방향 전환"
             >
-                <!-- 좌우 양방향 교환 화살표 아이콘 -->
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
                 </svg>
             </button>
 
-            <!-- 오른쪽 언어 라벨 -->
             <button 
                 id="langRightBtn"
                 class="flex-1 py-3 text-center text-sm font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-all duration-300 active:scale-95"
@@ -91,10 +81,8 @@
             </button>
         </div>
 
-        <!-- 입력/출력 텍스트 카드 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white rounded-3xl shadow-md border border-slate-200/60 overflow-hidden">
             
-            <!-- 왼쪽: 입력란 -->
             <div class="p-5 flex flex-col h-64 md:h-[380px] border-b md:border-b-0 md:border-r border-slate-100 relative">
                 <div class="flex justify-between items-center mb-2.5">
                     <span id="inputLabel" class="text-xs font-bold text-slate-400 tracking-wider">한국어 입력</span>
@@ -114,7 +102,6 @@
                 <div class="absolute bottom-3 right-5 text-[10px] text-slate-300 font-medium" id="charCounter">0자</div>
             </div>
 
-            <!-- 오른쪽: 출력 결과란 -->
             <div class="p-5 flex flex-col h-64 md:h-[380px] bg-slate-50/40 relative">
                 <div class="flex justify-between items-center mb-2.5">
                     <span id="outputLabel" class="text-xs font-bold text-slate-400 tracking-wider">우끼어 번역 결과</span>
@@ -134,18 +121,15 @@
             </div>
         </div>
 
-        <!-- 접이식 치환 테이블 안내판 -->
         <div id="rulesPanel" class="mt-4 bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hidden">
             <h3 class="text-xs font-bold text-slate-800 mb-3 flex items-center gap-1.5">
                 <span>📖</span> 실시간 치환 공식 표
             </h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[11px] text-slate-600">
-                <!-- 자음 가이드 -->
                 <div>
                     <h4 class="font-bold text-blue-500 mb-1.5 border-b pb-0.5">자음 대응표</h4>
                     <div id="consonantsGrid" class="grid grid-cols-3 gap-1"></div>
                 </div>
-                <!-- 모음 가이드 -->
                 <div>
                     <h4 class="font-bold text-emerald-500 mb-1.5 border-b pb-0.5">모음 대응표</h4>
                     <div id="vowelsGrid" class="grid grid-cols-3 gap-1"></div>
@@ -155,21 +139,16 @@
 
     </main>
 
-    <!-- 모바일 전용 하단 알림 피드백 -->
     <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white text-xs font-bold px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 opacity-0 pointer-events-none transform translate-y-2 z-50 flex items-center gap-1.5">
         <span>📋</span> 번역 결과가 복사되었습니다!
     </div>
 
-    <!-- 하단 영역 푸터 -->
     <footer class="py-4 border-t border-slate-200/60 text-center text-[10px] text-slate-400">
         <p>© Wookki Translator Ultimate (Standard Mode). All rights reserved.</p>
     </footer>
 
-    <!-- 핵심 비즈니스 로직 -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            
-            // --- 1. 변환 데이터 구조 정의 ---
             const CONSONANTS = {
                 'ㄱ': '우끼', 'ㅋ': '욱끼', 'ㄲ': '욲끼',
                 'ㄷ': '우끽', 'ㅌ': '욱끽', 'ㄸ': '욲끽',
@@ -184,7 +163,8 @@
                 'ㅓ': 'ㄱ끼', 'ㅕ': 'ㄲ끼', 'ㅗ': 'ㄱ끄', 'ㅛ': 'ㄲ끅', 
                 'ㅜ': '끅', 'ㅠ': '끆',
                 'ㅐ': '끽끼',   'ㅔ': 'ㄱ끼끼',  'ㅒ': '끾끼',   'ㅖ': 'ㄲ끼끼',  
-                'ㅘ': 'ㄱ끄끽', 'ㅙ': 'ㄱ끄끽끼', 'ㅚ': 'ㄱ끄끼',  'ㅝ': '극ㄱ끼',  
+                'ㅘ': 'ㄱ끄끽', 'ㅙ': 'ㄱ끄끽끼', 'ㅚ': 'ㄱ끄끼',  
+                'ㅝ': '끅ㄱ끼',
                 'ㅞ': '끅ㄱ끼끼', 'ㅟ': '끅끼',   'ㅢ': '끄끼'
             };
 
@@ -199,30 +179,20 @@
                 'ㅀ': ['ㄹ', 'ㅎ'], 'ㅄ': ['ㅂ', 'ㅅ']
             };
 
-            // 복원 및 해독을 위한 역방향 분석 사전
             const REVERSE_LOOKUP = {};
             Object.entries(CONSONANTS).forEach(([kor, wook]) => {
                 REVERSE_LOOKUP[wook] = { type: 'consonant', value: kor };
             });
             Object.entries(VOWELS).forEach(([kor, wook]) => {
-                if (!REVERSE_LOOKUP[wook]) {
-                    REVERSE_LOOKUP[wook] = { type: 'vowel', value: kor };
-                } else {
-                    if (!Array.isArray(REVERSE_LOOKUP[wook])) {
-                        REVERSE_LOOKUP[wook] = [REVERSE_LOOKUP[wook]];
-                    }
-                    REVERSE_LOOKUP[wook].push({ type: 'vowel', value: kor });
-                }
+                REVERSE_LOOKUP[wook] = { type: 'vowel', value: kor };
             });
 
-            // 매칭 정확성을 위해 긴 형태의 단어부터 역순 탐색하도록 설계
             const ALL_WOOKKI_TOKENS = [
                 ...Object.values(CONSONANTS),
                 ...Object.values(VOWELS)
             ].filter((v, i, self) => self.indexOf(v) === i)
              .sort((a, b) => b.length - a.length);
 
-            // --- 2. 한글 합성 엔진 함수 ---
             const assembleHangul = (cho, jung, jong) => {
                 const choIdx = CHOSEONG_LIST.indexOf(cho);
                 const jungIdx = JUNGSEONG_LIST.indexOf(jung);
@@ -240,7 +210,6 @@
                 return null;
             };
 
-            // --- 3. DOM 요소 획득 ---
             const inputTextEl = document.getElementById('inputText');
             const outputTextEl = document.getElementById('outputText');
             const clearBtn = document.getElementById('clearBtn');
@@ -260,7 +229,6 @@
             let mode = 'koToWook'; 
             let isAutoDetecting = true;
 
-            // --- 4. 코어 번역 처리 장치 ---
             const translateToWookki = (text) => {
                 let result = '';
                 for (let i = 0; i < text.length; i++) {
@@ -316,9 +284,6 @@
                     for (const tok of ALL_WOOKKI_TOKENS) {
                         if (text.startsWith(tok, i)) {
                             let data = REVERSE_LOOKUP[tok];
-                            if (Array.isArray(data)) {
-                                data = data[0]; 
-                            }
                             parsedTokens.push({
                                 type: data.type,
                                 token: tok,
@@ -385,7 +350,6 @@
                 return finalResult;
             };
 
-            // --- 5. 상태 변경에 따른 인터페이스 업데이트 함수 ---
             const performTranslation = () => {
                 const text = inputTextEl.value;
                 charCounter.textContent = `${text.length}자`;
@@ -404,7 +368,6 @@
                     return;
                 }
 
-                // 입력 데이터 검사 후 번역 모드 자동 제어
                 if (isAutoDetecting) {
                     const wookkiChars = (text.match(/[우끼욱욲]/g) || []).length;
                     const totalKoreanChars = (text.match(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g) || []).length;
@@ -457,7 +420,6 @@
                 performTranslation();
             };
 
-            // --- 6. 사용자 이벤트 리스너 등록 ---
             inputTextEl.addEventListener('input', performTranslation);
             
             clearBtn.addEventListener('click', () => {
@@ -473,7 +435,6 @@
                 if (isAutoDetecting) performTranslation();
             });
 
-            // 결과 복사 클립보드 기능 제어 (iframe 최적화)
             copyBtn.addEventListener('click', () => {
                 const textToCopy = outputTextEl.textContent;
                 if (!textToCopy) return;
@@ -485,7 +446,6 @@
                 try {
                     document.execCommand('copy');
                     
-                    // 성공 피드백 토스트 활성화
                     toastEl.classList.remove('opacity-0', 'translate-y-2', 'pointer-events-none');
                     toastEl.classList.add('opacity-100', 'translate-y-0');
                     setTimeout(() => {
@@ -494,12 +454,11 @@
                     }, 2000);
 
                 } catch (err) {
-                    console.error('클립보드 복사 실패:', err);
+                    console.error(err);
                 }
                 document.body.removeChild(tempTextArea);
             });
 
-            // 가이드라인 매핑 데이터 동적 삽입
             const loadRulesGrid = () => {
                 const conGrid = document.getElementById('consonantsGrid');
                 const vowGrid = document.getElementById('vowelsGrid');
@@ -530,7 +489,6 @@
                 }
             });
 
-            // 실행
             loadRulesGrid();
         });
     </script>
